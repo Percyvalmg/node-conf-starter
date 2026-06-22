@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Convert Spec to Word Document",
+      "trigger": "PostFileCreate",
+      "description": "Automatically converts new spec .md files to Word documents in docs/specs/",
+      "matcher": "\\.kiro/specs/.*\\.md$",
+      "action": {
+        "type": "command",
+        "command": "bash .kiro/scripts/convert-spec-to-docx.sh"
+      }
+    }
+  ]
+}
