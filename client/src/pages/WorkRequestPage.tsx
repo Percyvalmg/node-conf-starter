@@ -128,7 +128,7 @@ export function WorkRequestPage() {
     const result = await submit(input);
 
     if (result?.id) {
-      navigate(`/work-requests/${result.id}/shortlist`);
+      navigate(`/work-requests/${result.id}`);
     }
     // On failure, form data is retained automatically (state is not cleared)
   }
