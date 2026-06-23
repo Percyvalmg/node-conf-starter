@@ -18,6 +18,9 @@
     "format:check": "prettier --check .",
     "sync:specs": "bash .kiro/scripts/sync-specs-to-docx.sh"
   },
+  "prisma": {
+    "seed": "tsx server/prisma/seed.ts"
+  },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "concurrently": "^9.1.0",

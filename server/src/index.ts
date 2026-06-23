@@ -4,7 +4,7 @@ import cors from 'cors';
 import { apiRouter } from './routes/api.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
@@ -22,7 +22,9 @@ app.get('/health', (_req, res) => {
 // Error handling
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+// Start server only when this module is run directly
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+}
