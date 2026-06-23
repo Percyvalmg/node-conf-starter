@@ -1,14 +1,27 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
-// Component tests must not hit the network. Stub fetch with a healthy response
-// so App's /api/health effect resolves deterministically.
+// Component tests must not hit the network. Stub fetch to return
+// appropriate responses based on the URL being fetched.
 vi.stubGlobal(
   'fetch',
-  vi.fn(() =>
-    Promise.resolve({
+  vi.fn((url: string) => {
+    if (url === '/api/skills') {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ skills: ['TypeScript', 'React', 'Node.js'] }),
+      } as Response);
+    }
+    if (url === '/api/roles') {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ roles: ['Engineer', 'Architect', 'Tester'] }),
+      } as Response);
+    }
+    // Default: health check for backward compatibility
+    return Promise.resolve({
       ok: true,
       json: () => Promise.resolve({ status: 'healthy' }),
-    } as Response)
-  )
+    } as Response);
+  })
 );

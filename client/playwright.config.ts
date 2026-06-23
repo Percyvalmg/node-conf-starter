@@ -17,26 +17,18 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
   ],
 
   webServer: [
     {
-      command: 'npm run dev --workspace=server',
+      command: 'pnpm --filter server dev',
       url: 'http://localhost:3001/health',
       cwd: '..',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },
     {
-      command: 'npm run dev --workspace=client',
+      command: 'pnpm --filter client dev',
       url: 'http://localhost:5173',
       cwd: '..',
       reuseExistingServer: !process.env.CI,

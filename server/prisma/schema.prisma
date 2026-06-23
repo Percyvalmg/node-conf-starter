@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,11 +7,95 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Example model - customize as needed
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Candidate {
+  id                String   @id @default(cuid())
+  name              String
+  role              String
+  availabilityBand  Int      // 0-100 percentage
+  workloadIndicator Int      // 0-10 active engagements
+  businessUnit      String
+  createdAt         DateTime @default(now())
+
+  skills       CandidateSkill[]
+  squadMembers SquadMember[]
+}
+
+model Skill {
+  id   String @id @default(cuid())
+  name String @unique
+
+  candidates        CandidateSkill[]
+  workRequestSkills WorkRequestSkill[]
+}
+
+model CandidateSkill {
+  candidateId String
+  skillId     String
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+  skill     Skill     @relation(fields: [skillId], references: [id])
+
+  @@id([candidateId, skillId])
+}
+
+model RoleType {
+  id   String @id @default(cuid())
+  name String @unique
+
+  workRequestRoles WorkRequestRole[]
+}
+
+model WorkRequest {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  urgencyLevel  String   // Critical | High | Medium | Low
+  durationWeeks Int      // 1-104
+  createdAt     DateTime @default(now())
+
+  requiredSkills WorkRequestSkill[]
+  requiredRoles  WorkRequestRole[]
+  squad          Squad?
+}
+
+model WorkRequestSkill {
+  workRequestId String
+  skillId       String
+
+  workRequest WorkRequest @relation(fields: [workRequestId], references: [id])
+  skill       Skill       @relation(fields: [skillId], references: [id])
+
+  @@id([workRequestId, skillId])
+}
+
+model WorkRequestRole {
+  workRequestId String
+  roleTypeId    String
+
+  workRequest WorkRequest @relation(fields: [workRequestId], references: [id])
+  roleType    RoleType    @relation(fields: [roleTypeId], references: [id])
+
+  @@id([workRequestId, roleTypeId])
+}
+
+model Squad {
+  id                   String   @id @default(cuid())
+  workRequestId        String   @unique
+  skillCoveragePercent Float    // 0-100
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  workRequest WorkRequest @relation(fields: [workRequestId], references: [id])
+  members     SquadMember[]
+}
+
+model SquadMember {
+  id          String @id @default(cuid())
+  squadId     String
+  candidateId String
+
+  squad     Squad     @relation(fields: [squadId], references: [id], onDelete: Cascade)
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@unique([squadId, candidateId])
 }
