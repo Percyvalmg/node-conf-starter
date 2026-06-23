@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useWorkRequests, useWorkRequestDetail } from '../hooks/useWorkRequests';
+import { useNavigate } from 'react-router-dom';
+import { useWorkRequests } from '../hooks/useWorkRequests';
 import { WorkRequest, UrgencyLevel } from '../types';
 
 // ── Urgency badge ────────────────────────────────────────────────────────────
@@ -48,145 +49,13 @@ function formatDate(iso: string) {
   });
 }
 
-// ── WorkRequestDetail panel ──────────────────────────────────────────────────
-
-function WorkRequestDetail({
-  workRequestId,
-  onClose,
-}: {
-  workRequestId: string;
-  onClose: () => void;
-}) {
-  const { data, isLoading, error, retry } = useWorkRequestDetail(workRequestId);
-
-  return (
-    <section
-      aria-label="Work request detail"
-      className="border border-gray-200 rounded-lg bg-white shadow-sm p-6"
-    >
-      <div className="flex items-start justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Work Request Detail</h2>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
-          aria-label="Close detail panel"
-        >
-          <span aria-hidden="true" className="text-xl leading-none">
-            ×
-          </span>
-        </button>
-      </div>
-
-      {isLoading && (
-        <div className="py-8 text-center text-gray-500" role="status" aria-live="polite">
-          Loading…
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 p-4" role="alert">
-          <p className="text-red-800 text-sm">{error}</p>
-          <button
-            onClick={retry}
-            className="mt-2 rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {data && !isLoading && (
-        <div className="space-y-4">
-          {/* Header info */}
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">{data.title}</h3>
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <UrgencyBadge level={data.urgencyLevel} />
-              <span className="text-sm text-gray-500">{data.durationWeeks} weeks</span>
-              <span className="text-sm text-gray-400">·</span>
-              <span className="text-sm text-gray-500">Created {formatDate(data.createdAt)}</span>
-            </div>
-          </div>
-
-          {/* Description */}
-          {data.description && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-1">Description</p>
-              <p className="text-sm text-gray-600 whitespace-pre-line">{data.description}</p>
-            </div>
-          )}
-
-          {/* Required skills */}
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-1">Required Skills</p>
-            <div className="flex flex-wrap gap-1">
-              {data.requiredSkills.map((skill) => (
-                <span
-                  key={skill}
-                  className="inline-flex items-center rounded bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Required roles */}
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-1">Required Roles</p>
-            <div className="flex flex-wrap gap-1">
-              {data.requiredRoles.map((role) => (
-                <span
-                  key={role}
-                  className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700"
-                >
-                  {role}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Assembled squad */}
-          {data.squad ? (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <p className="text-sm font-medium text-gray-700">Assembled Squad</p>
-                <span className="text-xs text-gray-500">
-                  — {data.squad.skillCoveragePercent}% skill coverage
-                </span>
-              </div>
-              <ul className="divide-y divide-gray-100 border border-gray-200 rounded-md overflow-hidden" aria-label="Squad members">
-                {data.squad.members.map((member) => (
-                  <li
-                    key={member.id}
-                    className="flex items-center justify-between px-4 py-2 bg-white hover:bg-gray-50 text-sm"
-                  >
-                    <span className="font-medium text-gray-900">{member.name}</span>
-                    <span className="text-gray-500">{member.role}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <div className="rounded-md bg-amber-50 border border-amber-200 p-3">
-              <p className="text-sm text-amber-800">No squad assembled yet for this request.</p>
-            </div>
-          )}
-        </div>
-      )}
-    </section>
-  );
-}
-
 // ── HistoryList ───────────────────────────────────────────────────────────────
 
 function HistoryList({
   items,
-  selectedId,
   onSelect,
 }: {
   items: WorkRequest[];
-  selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
   return (
@@ -194,11 +63,8 @@ function HistoryList({
       {items.map((wr) => (
         <li key={wr.id}>
           <button
-            className={`w-full text-left px-5 py-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 transition-colors ${
-              selectedId === wr.id ? 'bg-indigo-50 border-l-4 border-indigo-500' : ''
-            }`}
+            className="w-full text-left px-5 py-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 transition-colors"
             onClick={() => onSelect(wr.id)}
-            aria-pressed={selectedId === wr.id}
             aria-label={`View details for ${wr.title}`}
           >
             <div className="flex items-start justify-between gap-4">
@@ -260,16 +126,15 @@ function Pagination({
 
 export function HistoryPage() {
   const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { data, isLoading, error, retry } = useWorkRequests(page, 50);
+  const { data, isLoading, error, retry } = useWorkRequests(page, 10);
+  const navigate = useNavigate();
 
   const handleSelect = (id: string) => {
-    setSelectedId((prev) => (prev === id ? null : id));
+    navigate(`/work-requests/${id}`);
   };
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    setSelectedId(null);
   };
 
   return (
@@ -308,37 +173,19 @@ export function HistoryPage() {
 
       {/* Content */}
       {!isLoading && !error && data && data.items.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          {/* List column */}
-          <div>
-            <p className="text-sm text-gray-500 mb-3">
-              {data.total} {data.total === 1 ? 'request' : 'requests'} total
-            </p>
-            <HistoryList
-              items={data.items}
-              selectedId={selectedId}
-              onSelect={handleSelect}
-            />
-            <Pagination
-              page={page}
-              totalPages={data.totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
-
-          {/* Detail column */}
-          <div>
-            {selectedId ? (
-              <WorkRequestDetail
-                workRequestId={selectedId}
-                onClose={() => setSelectedId(null)}
-              />
-            ) : (
-              <div className="rounded-md bg-gray-50 border border-gray-200 p-6 text-center text-gray-500 text-sm">
-                Select a work request to view its details.
-              </div>
-            )}
-          </div>
+        <div>
+          <p className="text-sm text-gray-500 mb-3">
+            {data.total} {data.total === 1 ? 'request' : 'requests'} total
+          </p>
+          <HistoryList
+            items={data.items}
+            onSelect={handleSelect}
+          />
+          <Pagination
+            page={page}
+            totalPages={data.totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       )}
     </div>

@@ -9,6 +9,7 @@ const ROLE_TYPES = [
   'Data Specialist',
   'Delivery Manager',
   'DevOps Engineer',
+  'UX Researcher',
 ] as const;
 
 const SKILLS = [
@@ -32,6 +33,9 @@ const SKILLS = [
   'System Design',
   'Performance Testing',
   'Security',
+  'User Interviews',
+  'Usability Testing',
+  'Wireframing',
 ] as const;
 
 interface CandidateSeed {
@@ -229,6 +233,16 @@ const CANDIDATES: CandidateSeed[] = [
     skills: ['Docker', 'Kubernetes', 'CI/CD', 'Security', 'AWS'],
     availabilityBand: 60,
     workloadIndicator: 4,
+    businessUnit: 'Digital Platforms',
+  },
+
+  // UX Researchers (1) — non-matching candidate for scoring verification
+  {
+    name: 'Olga Petrova',
+    role: 'UX Researcher',
+    skills: ['User Interviews', 'Usability Testing', 'Wireframing'],
+    availabilityBand: 85,
+    workloadIndicator: 1,
     businessUnit: 'Digital Platforms',
   },
 ];

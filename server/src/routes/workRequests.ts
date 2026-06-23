@@ -306,6 +306,58 @@ workRequestsRouter.get('/:id', async (req: Request, res: Response, next: NextFun
   }
 });
 
+// DELETE /api/work-requests/:id — delete a work request and all associated records
+workRequestsRouter.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Check if the work request exists
+    const workRequest = await prisma.workRequest.findUnique({
+      where: { id: req.params.id },
+      include: {
+        squad: { select: { id: true } },
+      },
+    });
+
+    if (!workRequest) {
+      res.status(404).json({ error: 'Work request not found' });
+      return;
+    }
+
+    // Delete all associated records in a transaction
+    await prisma.$transaction(async (tx) => {
+      // 1. Delete SquadMember records (via squad)
+      if (workRequest.squad) {
+        await tx.squadMember.deleteMany({
+          where: { squadId: workRequest.squad.id },
+        });
+
+        // 2. Delete Squad record
+        await tx.squad.delete({
+          where: { id: workRequest.squad.id },
+        });
+      }
+
+      // 3. Delete WorkRequestSkill records
+      await tx.workRequestSkill.deleteMany({
+        where: { workRequestId: req.params.id },
+      });
+
+      // 4. Delete WorkRequestRole records
+      await tx.workRequestRole.deleteMany({
+        where: { workRequestId: req.params.id },
+      });
+
+      // 5. Delete WorkRequest record
+      await tx.workRequest.delete({
+        where: { id: req.params.id },
+      });
+    });
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
 // POST /api/work-requests/:id/squad — save or replace squad selection
 workRequestsRouter.post('/:id/squad', async (req: Request, res: Response, next: NextFunction) => {
   try {

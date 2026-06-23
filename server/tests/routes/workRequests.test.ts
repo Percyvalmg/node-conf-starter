@@ -350,4 +350,65 @@ describe('/api/work-requests', () => {
       expect(response.body).toHaveProperty('error');
     });
   });
+
+  describe('DELETE /api/work-requests/:id', () => {
+    it('should delete a work request and return 204', async () => {
+      // Create a work request to delete
+      const createResponse = await request(app).post('/api/work-requests').send({
+        title: 'To Be Deleted',
+        description: 'This work request will be deleted',
+        requiredSkills: ['TypeScript'],
+        requiredRoles: ['Engineer'],
+        urgencyLevel: 'Low',
+        durationWeeks: 2,
+      });
+      const id = createResponse.body.id;
+
+      // Delete it
+      const deleteResponse = await request(app).delete(`/api/work-requests/${id}`);
+      expect(deleteResponse.status).toBe(204);
+
+      // Verify it's gone
+      const getResponse = await request(app).get(`/api/work-requests/${id}`);
+      expect(getResponse.status).toBe(404);
+    });
+
+    it('should return 404 when deleting a non-existent work request', async () => {
+      const response = await request(app).delete('/api/work-requests/non-existent-id-xyz');
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: 'Work request not found' });
+    });
+
+    it('should delete associated squad and squad members in the transaction', async () => {
+      // Create a work request
+      const createResponse = await request(app).post('/api/work-requests').send({
+        title: 'Delete With Squad',
+        description: 'This has a squad that should also be deleted',
+        requiredSkills: ['TypeScript', 'React'],
+        requiredRoles: ['Engineer'],
+        urgencyLevel: 'High',
+        durationWeeks: 6,
+      });
+      const id = createResponse.body.id;
+
+      // Get candidates directly from the database to create a squad
+      const candidates = await prisma.candidate.findMany({ take: 2 });
+      const candidateIds = candidates.map((c) => c.id);
+
+      // Create a squad for the work request
+      const squadResponse = await request(app)
+        .post(`/api/work-requests/${id}/squad`)
+        .send({ candidateIds });
+      expect(squadResponse.status).toBe(201);
+
+      // Delete the work request
+      const deleteResponse = await request(app).delete(`/api/work-requests/${id}`);
+      expect(deleteResponse.status).toBe(204);
+
+      // Verify work request is gone
+      const getResponse = await request(app).get(`/api/work-requests/${id}`);
+      expect(getResponse.status).toBe(404);
+    });
+  });
 });
